@@ -107,7 +107,7 @@ func (r *FilesResource) Upload(ctx context.Context, files []*multipart.FileHeade
 func (r *FilesResource) Download(ctx context.Context, fileId string) ([]byte, error) {
 	var result []byte
 
-	err := r.Get(ctx, fmt.Sprintf("/files/download/%s", fileId), &result, nil)
+	err := r.Get(ctx, fmt.Sprintf("/files/download?id=%s", fileId), &result, nil)
 	return result, err
 }
 
