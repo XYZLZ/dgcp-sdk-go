@@ -78,9 +78,11 @@ type MahoragaResponse[T any] struct {
 }
 
 type MahhoragaPaginatedResponse[T any] struct {
-	MahoragaResponse MahoragaResponse[T]
-	Page             int `json:"page"`
-	Limit            int `json:"limit"`
-	TotalResults     int `json:"totalResults"`
-	Pages            int `json:"pages"`
+	Code         int        `json:"code"`
+	HasError     bool       `json:"hasError"`
+	Payload      Payload[T] `json:"payload"`
+	Page         int        `json:"page"`
+	Limit        int        `json:"limit"`
+	TotalResults int        `json:"totalResults"`
+	Pages        int        `json:"pages"`
 }

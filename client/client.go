@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -120,6 +121,18 @@ func (c *BaseClient) Request(ctx context.Context, method, path string, body inte
 		return err
 	}
 	if result != nil && len(respBody) > 0 {
+		if h := resp.Header.Get("Content-Disposition"); strings.Contains(h, "attachment") {
+			if b, ok := result.(*[]byte); ok {
+				*b = respBody
+			}
+			return nil
+		}
+
+		if str, ok := result.(*string); ok {
+			*str = string(respBody)
+			return nil
+		}
+
 		if err := json.Unmarshal(respBody, result); err != nil {
 			return fmt.Errorf("error unmarshaling response: %w", err)
 		}
