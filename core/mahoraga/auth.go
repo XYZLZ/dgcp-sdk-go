@@ -27,6 +27,6 @@ func (r *LoginResource) Login(ctx context.Context, credentials mahoModels.Login)
 	var result mahoModels.MahoragaResponse[mahoModels.LoginServicePayload]
 	path := "/auth/login"
 
-	err := r.Post(ctx, path, credentials, &result)
+	err := r.Post(ctx, path, credentials, &result, nil)
 	return &result, err
 }

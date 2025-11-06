@@ -15,8 +15,7 @@ import (
     "context"
     "log"
     
-    sdk "github.com/yourcompany/my-api-sdk-go"
-    "github.com/yourcompany/my-api-sdk-go/types"
+    "github.com/XYZLZ/dgcp-sdk-go"
 )
 
 func main() {
@@ -31,8 +30,8 @@ func main() {
         log.Fatal(err)
     }
     
-    for _, user := range users.Payload.Content {
-        log.Printf("User: %s (%s)", user.Name, user.Email)
+    for _, file := range files.Payload.Content {
+        log.Printf("file: %s (%sMB)", file.FileName, user.FileSizeMB)
     }
 }
 ```

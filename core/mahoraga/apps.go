@@ -28,7 +28,7 @@ func (r *AppsResource) List(ctx context.Context, userId string) (*mahoModels.Mah
 	var result mahoModels.MahoragaResponse[[]mahoModels.App]
 	path := "/apps/get-user?userId=" + userId
 
-	err := r.BaseClient.Get(ctx, path, &result)
+	err := r.BaseClient.Get(ctx, path, &result, nil)
 	return &result, err
 }
 
@@ -43,7 +43,7 @@ func (r *AppsResource) Create(ctx context.Context, app *mahoModels.App) (*mahoMo
 	app.CreatedAt = nil
 	app.Id = ""
 	app.UpdatedAt = nil
-	err := r.BaseClient.Post(ctx, "/apps/create", app, &res)
+	err := r.BaseClient.Post(ctx, "/apps/create", app, &res, nil)
 	return &res, err
 }
 
@@ -55,7 +55,7 @@ func (r *AppsResource) Create(ctx context.Context, app *mahoModels.App) (*mahoMo
 // The error will contain the status code of the response and the body of the response.
 func (r *AppsResource) Update(ctx context.Context, app mahoModels.App) (*mahoModels.MahoragaResponse[mahoModels.App], error) {
 	var user mahoModels.MahoragaResponse[mahoModels.App]
-	err := r.Put(ctx, fmt.Sprintf("/apps/update/%s", app.Id), app, &user)
+	err := r.Put(ctx, fmt.Sprintf("/apps/update/%s", app.Id), app, &user, nil)
 	return &user, err
 }
 
@@ -67,7 +67,7 @@ func (r *AppsResource) Update(ctx context.Context, app mahoModels.App) (*mahoMod
 // The error will contain the status code of the response and the body of the response.
 func (r *AppsResource) GetSettings(ctx context.Context, appId string) (*mahoModels.MahoragaResponse[mahoModels.AppSettings], error) {
 	var settings mahoModels.MahoragaResponse[mahoModels.AppSettings]
-	err := r.Get(ctx, fmt.Sprintf("/apps/get-settings?appId=%s", appId), &settings)
+	err := r.Get(ctx, fmt.Sprintf("/apps/get-settings?appId=%s", appId), &settings, nil)
 	return &settings, err
 }
 
@@ -84,7 +84,7 @@ func (r *AppsResource) CreateSettings(ctx context.Context, settings mahoModels.A
 	settings.UpdatedAt = nil
 	settings.State = nil
 
-	err := r.Post(ctx, "/apps/create-settings", settings, &res)
+	err := r.Post(ctx, "/apps/create-settings", settings, &res, nil)
 	return &res, err
 }
 
@@ -96,6 +96,6 @@ func (r *AppsResource) CreateSettings(ctx context.Context, settings mahoModels.A
 // The error will contain the status code of the response and the body of the response.
 func (r *AppsResource) UpdateSettings(ctx context.Context, settings mahoModels.AppSettings) (*mahoModels.MahoragaResponse[mahoModels.AppSettings], error) {
 	var user mahoModels.MahoragaResponse[mahoModels.AppSettings]
-	err := r.Put(ctx, fmt.Sprintf("/apps/update-settings/%d", settings.Id), settings, &user)
+	err := r.Put(ctx, fmt.Sprintf("/apps/update-settings/%d", settings.Id), settings, &user, nil)
 	return &user, err
 }

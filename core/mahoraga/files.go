@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/textproto"
 
 	sdkClient "github.com/XYZLZ/dgcp-sdk-go/client"
 	"github.com/XYZLZ/dgcp-sdk-go/models"
@@ -41,7 +42,7 @@ func (r *FilesResource) List(ctx context.Context, params *models.PaginationReque
 		path = fmt.Sprintf("%s?page=%d&limit=%d", path, params.Page, params.Limit)
 	}
 
-	err := r.Get(ctx, path, &result)
+	err := r.Get(ctx, path, &result, nil)
 	return &result, err
 }
 
@@ -59,21 +60,29 @@ func (r *FilesResource) Upload(ctx context.Context, files []*multipart.FileHeade
 		writer = multipart.NewWriter(&b)
 	)
 
-	for _, fileHeader := range files {
+	for i, fileHeader := range files {
+		if fileHeader == nil {
+			return nil, fmt.Errorf("file at index %d is nil", i)
+		}
+
 		file, err := fileHeader.Open()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to open file %s: %v", fileHeader.Filename, err)
 		}
 		defer file.Close()
 
-		part, err := writer.CreateFormFile("files", fileHeader.Filename)
+		h := make(textproto.MIMEHeader)
+		h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="files"; filename="%s"`, fileHeader.Filename))
+		h.Set("Content-Type", fileHeader.Header.Get("Content-Type"))
+
+		part, err := writer.CreatePart(h)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create form file: %v", err)
+			return nil, fmt.Errorf("failed to create form file for %s: %v", fileHeader.Filename, err)
 		}
 
 		_, err = io.Copy(part, file)
 		if err != nil {
-			return nil, fmt.Errorf("failed to copy file data: %v", err)
+			return nil, fmt.Errorf("failed to copy file data for %s: %v", fileHeader.Filename, err)
 		}
 	}
 
@@ -81,7 +90,11 @@ func (r *FilesResource) Upload(ctx context.Context, files []*multipart.FileHeade
 		return nil, fmt.Errorf("failed to close multipart writer: %v", err)
 	}
 
-	err := r.Post(ctx, path, &b, &result)
+	headers := map[string]string{
+		"Content-Type": writer.FormDataContentType(),
+	}
+
+	err := r.Post(ctx, path, &b, &result, &headers)
 	return &result, err
 }
 
@@ -94,11 +107,11 @@ func (r *FilesResource) Upload(ctx context.Context, files []*multipart.FileHeade
 func (r *FilesResource) Download(ctx context.Context, fileId string) ([]byte, error) {
 	var result []byte
 
-	err := r.Get(ctx, fmt.Sprintf("/files/download/%s", fileId), &result)
+	err := r.Get(ctx, fmt.Sprintf("/files/download/%s", fileId), &result, nil)
 	return result, err
 }
 
 func (r *FilesResource) Delete(ctx context.Context, fileId string) error {
 	path := fmt.Sprintf("/files/delete/%s", fileId)
-	return r.BaseClient.Delete(ctx, path)
+	return r.BaseClient.Delete(ctx, path, nil)
 }

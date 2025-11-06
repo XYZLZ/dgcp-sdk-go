@@ -5,13 +5,13 @@ import "time"
 type APIEndpoint string
 
 const (
-	API      APIEndpoint = "identity"
-	Mahoraga APIEndpoint = "files"
+	API      APIEndpoint = "api"
+	Mahoraga APIEndpoint = "mahoraga"
 )
 
 var BaseURLs = map[APIEndpoint]string{
-	API:      "https://datosabiertos.dgcp.gob.do/api-dgcp/v1/",
-	Mahoraga: "http://172.30.1.157:9090/api/v1",
+	API:      "https://datosabiertos.dgcp.gob.do/api-dgcp/v1",
+	Mahoraga: "http://172.30.3.35:9090/api/v1",
 }
 
 type SDKConfig struct {
@@ -23,7 +23,7 @@ type SDKConfig struct {
 	CustomHeader map[string]string
 }
 
-// DefaultSDKConfig retorna la configuración por defecto
+// DefaultSDKConfig return a new SDKConfig with the default values
 func DefaultSDKConfig(apiKey string) *SDKConfig {
 	return &SDKConfig{
 		APIKey:       apiKey,
