@@ -46,7 +46,7 @@ func (c *BaseClient) GetBaseURL() string {
 	return c.baseURL
 }
 
-func (c *BaseClient) Request(ctx context.Context, method, path string, body interface{}, result interface{}, customHeaders *map[string]string) error {
+func (c *BaseClient) request(ctx context.Context, method, path string, body interface{}, result interface{}, customHeaders *map[string]string) error {
 	url := c.baseURL + path
 	var reqBody io.Reader
 
@@ -442,21 +442,21 @@ func extractValidationFields(details map[string]interface{}) map[string]string {
 }
 
 func (c *BaseClient) Get(ctx context.Context, path string, result interface{}, customHeaders *map[string]string) error {
-	return c.Request(ctx, http.MethodGet, path, nil, result, customHeaders)
+	return c.request(ctx, http.MethodGet, path, nil, result, customHeaders)
 }
 
 func (c *BaseClient) Post(ctx context.Context, path string, body interface{}, result interface{}, customHeaders *map[string]string) error {
-	return c.Request(ctx, http.MethodPost, path, body, result, customHeaders)
+	return c.request(ctx, http.MethodPost, path, body, result, customHeaders)
 }
 
 func (c *BaseClient) Patch(ctx context.Context, path string, body interface{}, result interface{}, customHeaders *map[string]string) error {
-	return c.Request(ctx, http.MethodPatch, path, body, result, customHeaders)
+	return c.request(ctx, http.MethodPatch, path, body, result, customHeaders)
 }
 
 func (c *BaseClient) Put(ctx context.Context, path string, body interface{}, result interface{}, customHeaders *map[string]string) error {
-	return c.Request(ctx, http.MethodPut, path, body, result, customHeaders)
+	return c.request(ctx, http.MethodPut, path, body, result, customHeaders)
 }
 
 func (c *BaseClient) Delete(ctx context.Context, path string, customHeaders *map[string]string) error {
-	return c.Request(ctx, http.MethodDelete, path, nil, nil, customHeaders)
+	return c.request(ctx, http.MethodDelete, path, nil, nil, customHeaders)
 }
