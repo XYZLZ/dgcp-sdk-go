@@ -4,6 +4,7 @@ import (
 	"context"
 
 	sdkClient "github.com/XYZLZ/dgcp-sdk-go/client"
+	"github.com/XYZLZ/dgcp-sdk-go/models"
 	mahoModels "github.com/XYZLZ/dgcp-sdk-go/models/mahoraga"
 )
 
@@ -23,10 +24,16 @@ func NewLoginResource(config *sdkClient.SDKConfig) *LoginResource {
 //
 // The endpoint will return an error if the request fails.
 // The error will contain the status code of the response and the body of the response.
-func (r *LoginResource) Login(ctx context.Context, credentials mahoModels.Login) (*mahoModels.MahoragaResponse[mahoModels.LoginServicePayload], error) {
+func (r *LoginResource) Login(ctx context.Context, credentials mahoModels.Login, opts ...models.CallOption) (*mahoModels.MahoragaResponse[mahoModels.LoginServicePayload], error) {
 	var result mahoModels.MahoragaResponse[mahoModels.LoginServicePayload]
+	callOpts := &models.CallOptions{}
+
+	for _, opt := range opts {
+		opt(callOpts)
+	}
+
 	path := "/auth/login"
 
-	err := r.Post(ctx, path, credentials, &result, nil)
+	err := r.Post(ctx, path, credentials, &result, nil, callOpts)
 	return &result, err
 }

@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/XYZLZ/dgcp-sdk-go/models"
 )
 
 const sdkVersion = "1.0.0"
@@ -46,7 +48,17 @@ func (c *BaseClient) GetBaseURL() string {
 	return c.baseURL
 }
 
-func (c *BaseClient) request(ctx context.Context, method, path string, body interface{}, result interface{}, customHeaders *map[string]string) error {
+func (c *BaseClient) GetConfig() *SDKConfig {
+	return c.config
+}
+
+func (c *BaseClient) writeDebug(msg string, args ...interface{}) {
+	if c.config.Debug {
+		log.Printf(msg, args...)
+	}
+}
+
+func (c *BaseClient) request(ctx context.Context, method, path string, body interface{}, result interface{}, customHeaders *map[string]string, opts *models.CallOptions) error {
 	url := c.baseURL + path
 	var reqBody io.Reader
 
@@ -91,11 +103,10 @@ func (c *BaseClient) request(ctx context.Context, method, path string, body inte
 		}
 	}
 
-	if c.config.Debug {
-		log.Printf("[SDK Request] %s %s (Endpoint: %s)", method, url, c.endpoint)
-		for key, value := range req.Header {
-			log.Printf("[SDK Request Header] %s: %s", key, value)
-		}
+	c.writeDebug("[SDK Request] %s %s (Endpoint: %s)", method, url, c.endpoint)
+
+	for key, value := range req.Header {
+		c.writeDebug("[SDK Request Header] %s: %s", key, value)
 	}
 
 	resp, err := c.doWithRetry(req)
@@ -104,8 +115,12 @@ func (c *BaseClient) request(ctx context.Context, method, path string, body inte
 	}
 	defer resp.Body.Close()
 
-	if c.config.Debug {
-		log.Printf("[SDK Response] %d %s", resp.StatusCode, url)
+	c.writeDebug("[SDK Response] %d %s", resp.StatusCode, url)
+
+	if opts != nil && opts.IncludeMetadata && opts.Metadata != nil {
+		opts.Metadata.Headers = resp.Header.Clone()
+		opts.Metadata.StatusCode = resp.StatusCode
+		opts.Metadata.RequestID = resp.Header.Get("X-Request-ID")
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
@@ -115,9 +130,7 @@ func (c *BaseClient) request(ctx context.Context, method, path string, body inte
 
 	if resp.StatusCode >= 400 {
 		err := c.handleErrorResponse(resp.StatusCode, respBody)
-		if c.config.Debug {
-			log.Printf("[SDK Error] %s", err.Error())
-		}
+		c.writeDebug("[SDK Error] %s", err.Error())
 		return err
 	}
 	if result != nil && len(respBody) > 0 {
@@ -148,9 +161,7 @@ func (c *BaseClient) doWithRetry(req *http.Request) (*http.Response, error) {
 	for attempt := 0; attempt <= c.config.MaxRetries; attempt++ {
 		if attempt > 0 {
 			time.Sleep(c.config.RetryDelay * time.Duration(attempt))
-			if c.config.Debug {
-				log.Printf("[SDK Retry] Attempt %d/%d", attempt, c.config.MaxRetries)
-			}
+			c.writeDebug("[SDK Retry] Attempt %d/%d", attempt, c.config.MaxRetries)
 		}
 
 		resp, err = c.httpClient.Do(req)
@@ -181,7 +192,7 @@ func (c *BaseClient) shouldRetry(statusCode int) bool {
 	return false
 }
 
-func (c *BaseClient) handleErrorResponse(statusCode int, body []byte) error {
+func (c *BaseClient) handleErrorResponse(statusCode int, body []byte) *SDKError {
 
 	if len(body) == 0 {
 		return c.createErrorByStatusCode(statusCode, "No error details provided", nil)
@@ -323,7 +334,7 @@ func (c *BaseClient) parseErrorBody(body []byte) parsedErrorInfo {
 	return result
 }
 
-func (c *BaseClient) createErrorByStatusCode(statusCode int, message string, details map[string]interface{}) error {
+func (c *BaseClient) createErrorByStatusCode(statusCode int, message string, details map[string]interface{}) *SDKError {
 	switch statusCode {
 	case http.StatusUnauthorized:
 		return AuthenticationError(message, errors.New("authentication failed"))
@@ -441,22 +452,22 @@ func extractValidationFields(details map[string]interface{}) map[string]string {
 	return fields
 }
 
-func (c *BaseClient) Get(ctx context.Context, path string, result interface{}, customHeaders *map[string]string) error {
-	return c.request(ctx, http.MethodGet, path, nil, result, customHeaders)
+func (c *BaseClient) Get(ctx context.Context, path string, result interface{}, customHeaders *map[string]string, opts *models.CallOptions) error {
+	return c.request(ctx, http.MethodGet, path, nil, result, customHeaders, opts)
 }
 
-func (c *BaseClient) Post(ctx context.Context, path string, body interface{}, result interface{}, customHeaders *map[string]string) error {
-	return c.request(ctx, http.MethodPost, path, body, result, customHeaders)
+func (c *BaseClient) Post(ctx context.Context, path string, body interface{}, result interface{}, customHeaders *map[string]string, opts *models.CallOptions) error {
+	return c.request(ctx, http.MethodPost, path, body, result, customHeaders, opts)
 }
 
-func (c *BaseClient) Patch(ctx context.Context, path string, body interface{}, result interface{}, customHeaders *map[string]string) error {
-	return c.request(ctx, http.MethodPatch, path, body, result, customHeaders)
+func (c *BaseClient) Patch(ctx context.Context, path string, body interface{}, result interface{}, customHeaders *map[string]string, opts *models.CallOptions) error {
+	return c.request(ctx, http.MethodPatch, path, body, result, customHeaders, opts)
 }
 
-func (c *BaseClient) Put(ctx context.Context, path string, body interface{}, result interface{}, customHeaders *map[string]string) error {
-	return c.request(ctx, http.MethodPut, path, body, result, customHeaders)
+func (c *BaseClient) Put(ctx context.Context, path string, body interface{}, result interface{}, customHeaders *map[string]string, opts *models.CallOptions) error {
+	return c.request(ctx, http.MethodPut, path, body, result, customHeaders, opts)
 }
 
-func (c *BaseClient) Delete(ctx context.Context, path string, customHeaders *map[string]string) error {
-	return c.request(ctx, http.MethodDelete, path, nil, nil, customHeaders)
+func (c *BaseClient) Delete(ctx context.Context, path string, customHeaders *map[string]string, opts *models.CallOptions) error {
+	return c.request(ctx, http.MethodDelete, path, nil, nil, customHeaders, opts)
 }

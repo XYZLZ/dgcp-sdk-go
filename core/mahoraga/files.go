@@ -32,17 +32,22 @@ func NewFilesResource(config *sdkClient.SDKConfig) *FilesResource {
 //
 // The endpoint will return an error if the request fails.
 // The error will contain the status code of the response and the body of the response.
-func (r *FilesResource) List(ctx context.Context, params *models.PaginationRequest) (*mahoModels.MahhoragaPaginatedResponse[[]mahoModels.FilesInfo], error) {
+func (r *FilesResource) List(ctx context.Context, params *models.PaginationRequest, opts ...models.CallOption) (*mahoModels.MahhoragaPaginatedResponse[[]mahoModels.FilesInfo], error) {
 	var (
 		result mahoModels.MahhoragaPaginatedResponse[[]mahoModels.FilesInfo]
 		path   = "/files"
 	)
 
+	callOpts := &models.CallOptions{}
+	for _, opt := range opts {
+		opt(callOpts)
+	}
+
 	if params != nil {
 		path = fmt.Sprintf("%s?page=%d&limit=%d", path, params.Page, params.Limit)
 	}
 
-	err := r.Get(ctx, path, &result, nil)
+	err := r.Get(ctx, path, &result, nil, callOpts)
 	return &result, err
 }
 
@@ -52,13 +57,18 @@ func (r *FilesResource) List(ctx context.Context, params *models.PaginationReque
 //
 // The endpoint will return an error if the request fails.
 // The error will contain the status code of the response and the body of the response.
-func (r *FilesResource) Upload(ctx context.Context, files []*multipart.FileHeader) (*mahoModels.MahoragaResponse[[]mahoModels.FilesInfo], error) {
+func (r *FilesResource) Upload(ctx context.Context, files []*multipart.FileHeader, opts ...models.CallOption) (*mahoModels.MahoragaResponse[[]mahoModels.FilesInfo], error) {
 	var (
 		result mahoModels.MahoragaResponse[[]mahoModels.FilesInfo]
 		path   = "/files/upload"
 		b      bytes.Buffer
 		writer = multipart.NewWriter(&b)
 	)
+
+	callOpts := &models.CallOptions{}
+	for _, opt := range opts {
+		opt(callOpts)
+	}
 
 	for i, fileHeader := range files {
 		if fileHeader == nil {
@@ -94,7 +104,7 @@ func (r *FilesResource) Upload(ctx context.Context, files []*multipart.FileHeade
 		"Content-Type": writer.FormDataContentType(),
 	}
 
-	err := r.Post(ctx, path, &b, &result, &headers)
+	err := r.Post(ctx, path, &b, &result, &headers, callOpts)
 	return &result, err
 }
 
@@ -104,14 +114,24 @@ func (r *FilesResource) Upload(ctx context.Context, files []*multipart.FileHeade
 //
 // The endpoint will return an error if the request fails.
 // The error will contain the status code of the response and the body of the response.
-func (r *FilesResource) Download(ctx context.Context, fileId string) ([]byte, error) {
+func (r *FilesResource) Download(ctx context.Context, fileId string, opts ...models.CallOption) ([]byte, error) {
 	var result []byte
 
-	err := r.Get(ctx, fmt.Sprintf("/files/download?id=%s", fileId), &result, nil)
+	callOpts := &models.CallOptions{}
+	for _, opt := range opts {
+		opt(callOpts)
+	}
+
+	err := r.Get(ctx, fmt.Sprintf("/files/download?id=%s", fileId), &result, nil, callOpts)
 	return result, err
 }
 
-func (r *FilesResource) Delete(ctx context.Context, fileId string) error {
+func (r *FilesResource) Delete(ctx context.Context, fileId string, opts ...models.CallOption) error {
+	callOpts := &models.CallOptions{}
+	for _, opt := range opts {
+		opt(callOpts)
+	}
+
 	path := fmt.Sprintf("/files/delete/%s", fileId)
-	return r.BaseClient.Delete(ctx, path, nil)
+	return r.BaseClient.Delete(ctx, path, nil, callOpts)
 }
