@@ -11,7 +11,7 @@ const (
 
 var BaseURLs = map[APIEndpoint]string{
 	API:      "https://datosabiertos.dgcp.gob.do/api-dgcp/v1",
-	Mahoraga: "http://172.30.1.178:9090/api/v1",
+	Mahoraga: "https://mahoraga.dgcp.gob.do/api",
 }
 
 type SDKConfig struct {
